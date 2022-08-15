@@ -1,0 +1,77 @@
+const fetch = require("node-fetch");
+var express = require("express");
+const { json } = require("express/lib/response");
+var router = express.Router();
+
+const { uuid } = require("uuidv4");
+const { serverCheckUserIsValid } = require("../utils/validation");
+
+const userList = [
+  {
+    id: 0,
+    firstName: "",
+    lastName: "",
+    email: "",
+    role:""
+  },
+];
+
+/* GET home page. */
+router.get("/", function (req, res, next) {
+  res.render("index", { title: "Express" });
+});
+
+router.post("/create-user", (req, res) => {
+  try {
+    const userData = req.body.userData;
+    const userIsValid = serverCheckUserIsValid(userData);
+    if (!userIsValid) {
+      res.status(400).json({
+        serverMessage:
+          "Must include your First Name, Last Name, and Email.",
+      });
+      return;
+    }
+
+    const firstName = userData.firstName;
+    const lastName = userData.lastName;
+    const email = userData.email;
+    const id = uuid();
+    const newUser = {
+      id,
+      firstName,
+      lastName,
+      email,
+    };
+    userList[0] = newUser;
+    res
+      .json({ serverMessage: "New user created!", success: true })
+      .status(200);
+  } catch (error) {
+    console.log("error block ", error);
+    res.json({ serverMessage: error }).status(400);
+  }
+});
+
+router.post("/post-message", (req, res) => {
+  try {
+    const clientMessage = req.body.clientMessage;
+    const dateTime = new Date();
+    const response = `Recieved client message: ${clientMessage}. Responded at ${dateTime.toString()}`;
+    res.json({ serverMessage: response }).status(200);
+  } catch (error) {
+    res.json({ serverMessage: error }).status(400);
+  }
+});
+
+router.get("/get-users", async (req, res) => {
+  try {
+    res.json({ serverMessage: userList }).status(200);
+  } catch (error) {
+    res.json({ serverMessage: error }).status(400);
+  }
+});
+
+
+
+module.exports = router;
